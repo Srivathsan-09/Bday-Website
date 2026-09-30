@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react'
+import React, { useEffect, useRef } from 'react'
 import * as THREE from 'three'
 import { photos } from '../../data/photos'
 import { createPhotoCardMesh } from './PhotoCardMesh'
@@ -21,7 +21,6 @@ export default function CinematicCanvas({
   const mouseRef = useRef({ x: 0, y: 0, targetX: 0, targetY: 0 })
   const cakeMeshRef = useRef(null)
   const photoMeshesRef = useRef([])
-  const constellationGroupRef = useRef(null)
   const timelineGroupRef = useRef(null)
   const distanceGroupRef = useRef(null)
   const particlesRef = useRef(null)
@@ -31,20 +30,18 @@ export default function CinematicCanvas({
   const isDraggingGalleryRef = useRef(false)
   const lastPointerXRef = useRef(0)
 
-  // Camera targets for each scene
+  // Camera targets for each scene (8 scenes total)
   const cameraTargets = {
     1: { pos: new THREE.Vector3(0, 0, 9.5), look: new THREE.Vector3(0, 0, 0) },
     2: { pos: new THREE.Vector3(0, 0.2, 7.8), look: new THREE.Vector3(0, 0, 0) },
     3: { pos: new THREE.Vector3(0, 0.4, 8.2), look: new THREE.Vector3(0, 0.2, 0) },
     4: { pos: new THREE.Vector3(0, 0.5, 9.0), look: new THREE.Vector3(0, 0, 0) },
     5: { pos: new THREE.Vector3(0, 0.1, 7.4), look: new THREE.Vector3(0, 0, 0) },
-    6: { pos: new THREE.Vector3(0, 0.3, 8.2), look: new THREE.Vector3(0, 0, 0) },
-    7: { pos: new THREE.Vector3(0, 0, 7.0), look: new THREE.Vector3(0, 0, 0) },
-    8: { pos: new THREE.Vector3(0, 1.2, 5.2), look: new THREE.Vector3(0, 0.8, 0) },
-    9: { pos: new THREE.Vector3(0, 0.5, 8.8), look: new THREE.Vector3(0, 0.2, 0) },
+    6: { pos: new THREE.Vector3(0, 0, 7.0), look: new THREE.Vector3(0, 0, 0) },
+    7: { pos: new THREE.Vector3(0, 1.2, 5.2), look: new THREE.Vector3(0, 0.8, 0) },
+    8: { pos: new THREE.Vector3(0, 0.5, 8.8), look: new THREE.Vector3(0, 0.2, 0) },
   }
 
-  // Smooth lerp camera
   const currentCamPos = useRef(new THREE.Vector3(0, 0, 12))
   const currentCamLook = useRef(new THREE.Vector3(0, 0, 0))
 
@@ -198,7 +195,6 @@ export default function CinematicCanvas({
 
           loadedCount++
           if (loadedCount === photos.length) {
-            // Sort by id for deterministic scene layouts
             cardMeshes.sort((a, b) => a.userData.photo.id - b.userData.photo.id)
             photoMeshesRef.current = cardMeshes
             onLoaded()
@@ -217,7 +213,7 @@ export default function CinematicCanvas({
       )
     })
 
-    // 7. Scene 3 — Timeline Curve & Milestones
+    // 7. Scene 3 — Timeline Curve & Milestones (positioned lower so text is crystal clear)
     const timelineGroup = new THREE.Group()
     timelineGroup.name = 'timeline_group'
 
@@ -345,36 +341,20 @@ export default function CinematicCanvas({
     scene.add(distanceGroup)
     distanceGroupRef.current = distanceGroup
 
-    // 9. Scene 6 — Constellation Lines
-    const constellationGroup = new THREE.Group()
-    const lineMat = new THREE.LineBasicMaterial({
-      color: 0xe6c887,
-      transparent: true,
-      opacity: 0.45,
-      blending: THREE.AdditiveBlending,
-    })
-    const constellationLineGeom = new THREE.BufferGeometry()
-    const constellationLines = new THREE.LineSegments(constellationLineGeom, lineMat)
-    constellationGroup.add(constellationLines)
-    constellationGroup.visible = false
-    scene.add(constellationGroup)
-    constellationGroupRef.current = constellationGroup
-
-    // 10. Scene 8 — The 3D Birthday Cake
+    // 9. Scene 7 — The 3D Birthday Cake
     const cake = createCakeMesh()
     cake.position.set(0, -0.6, 0)
     cake.visible = false
     scene.add(cake)
     cakeMeshRef.current = cake
 
-    // 11. Mouse & Touch Interaction (Parallax & Gallery Drag)
+    // 10. Mouse & Touch Interaction (Parallax & Gallery Drag)
     const handlePointerMove = (e) => {
       const clientX = e.touches ? e.touches[0].clientX : e.clientX
       const clientY = e.touches ? e.touches[0].clientY : e.clientY
       mouseRef.current.targetX = (clientX / window.innerWidth) * 2 - 1
       mouseRef.current.targetY = -(clientY / window.innerHeight) * 2 + 1
 
-      // Drag carousel in Scene 5
       if (isDraggingGalleryRef.current && currentScene === 5) {
         const deltaX = clientX - lastPointerXRef.current
         galleryRotationRef.current += deltaX * 0.005
@@ -405,7 +385,7 @@ export default function CinematicCanvas({
     const mouseVector = new THREE.Vector2()
 
     const handlePointerDown = (e) => {
-      if (currentScene !== 5 && currentScene !== 6 && currentScene !== 8) return
+      if (currentScene !== 5 && currentScene !== 7) return
       const clientX = e.clientX || (e.touches && e.touches[0]?.clientX)
       const clientY = e.clientY || (e.touches && e.touches[0]?.clientY)
       if (clientX === undefined) return
@@ -415,8 +395,8 @@ export default function CinematicCanvas({
 
       raycaster.setFromCamera(mouseVector, camera)
 
-      // Cake candle tap
-      if (currentScene === 8 && cakeMeshRef.current) {
+      // Cake candle tap on Scene 7
+      if (currentScene === 7 && cakeMeshRef.current) {
         const cakeIntersects = raycaster.intersectObjects(cakeMeshRef.current.children, true)
         if (cakeIntersects.length > 0) {
           onCandleBlow()
@@ -424,7 +404,7 @@ export default function CinematicCanvas({
         }
       }
 
-      // Photo card click
+      // Photo card click in gallery (Scene 5)
       const photoObjects = photoMeshesRef.current.flatMap((c) => c.children)
       const intersects = raycaster.intersectObjects(photoObjects, true)
 
@@ -441,7 +421,6 @@ export default function CinematicCanvas({
 
     window.addEventListener('click', handlePointerDown)
 
-    // Resize Handler
     const handleResize = () => {
       if (!container || !renderer || !camera) return
       const w = container.clientWidth || window.innerWidth
@@ -454,18 +433,16 @@ export default function CinematicCanvas({
 
     window.addEventListener('resize', handleResize)
 
-    // 12. Main 60 FPS Render & Animation Loop
+    // 11. Main 60 FPS Render & Animation Loop
     let animationFrameId
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate)
 
       const time = clockRef.current.getElapsedTime()
 
-      // Smooth mouse damping
       mouseRef.current.x += (mouseRef.current.targetX - mouseRef.current.x) * 0.05
       mouseRef.current.y += (mouseRef.current.targetY - mouseRef.current.y) * 0.05
 
-      // Smooth camera interpolation towards active scene target
       const target = cameraTargets[currentScene] || cameraTargets[1]
       const parallaxFactorX = window.innerWidth < 768 ? 0.35 : 0.75
       const parallaxFactorY = window.innerWidth < 768 ? 0.25 : 0.55
@@ -490,13 +467,12 @@ export default function CinematicCanvas({
       camera.position.copy(currentCamPos.current)
       camera.lookAt(currentCamLook.current)
 
-      // Ambient particle drift
       if (particlesRef.current) {
         particlesRef.current.rotation.y = time * 0.015
         particlesRef.current.rotation.x = Math.sin(time * 0.01) * 0.05
       }
 
-      // Animate Cake Flames & Extinguish
+      // Animate Cake Flames & Extinguish on Scene 7
       if (cakeMeshRef.current && cakeMeshRef.current.userData) {
         const cakeData = cakeMeshRef.current.userData
         if (cakeData.candleFlames) {
@@ -514,7 +490,7 @@ export default function CinematicCanvas({
             }
           })
         }
-        if (currentScene === 8) {
+        if (currentScene === 7) {
           cakeMeshRef.current.rotation.y += 0.006
         }
       }
@@ -555,12 +531,7 @@ export default function CinematicCanvas({
         timelineGroupRef.current.rotation.z = Math.sin(time * 0.4) * 0.02
       }
 
-      // Constellation rotation
-      if (constellationGroupRef.current && constellationGroupRef.current.visible) {
-        constellationGroupRef.current.rotation.y = time * 0.03
-      }
-
-      // 13. Dynamic Positioning of Manisha's 8 Photo Cards
+      // 12. Dynamic Positioning of Manisha's 8 Photo Cards (8 Scenes Total)
       const meshes = photoMeshesRef.current
       const count = meshes.length
 
@@ -583,7 +554,6 @@ export default function CinematicCanvas({
             targetScale = 0.85
           } else if (currentScene === 2) {
             // Scene 2: Statuesque arrangement framing "MANISHA"
-            // 4 on the left wing, 4 on the right wing
             const isLeft = idx < count / 2
             const colIdx = idx % 4
             const xBase = isLeft ? -3.4 - (colIdx % 2) * 1.4 : 3.4 + (colIdx % 2) * 1.4
@@ -603,7 +573,7 @@ export default function CinematicCanvas({
             )
             targetScale = window.innerWidth < 768 ? 0.6 : 0.95
           } else if (currentScene === 3) {
-            // Scene 3: Position photo cards cleanly framing the timeline text from the sides
+            // Scene 3: Cleanly framing the timeline text from the sides
             const isLeft = idx < count / 2
             const sideIdx = idx % 4
             const x = isLeft ? -3.8 - (sideIdx % 2) * 1.3 : 3.8 + (sideIdx % 2) * 1.3
@@ -636,29 +606,13 @@ export default function CinematicCanvas({
             targetRot.set(0, baseAngle + mouseRef.current.x * 0.15, 0)
             targetScale = isMobile ? 0.8 : 1.05
 
-            // Focused / Zoomed Photo
             if (selectedPhotoId === card.userData?.photo?.id) {
               targetPos.set(0, 0, 3.4)
               targetRot.set(mouseRef.current.y * 0.2, mouseRef.current.x * 0.2, 0)
               targetScale = isMobile ? 1.25 : 1.55
             }
           } else if (currentScene === 6) {
-            // Scene 6: 3D Celestial Constellation (8 nodes equally split: 4 on left, 4 on right)
-            const isLeft = idx < count / 2
-            const sideIdx = idx % 4
-            const xPositions = isLeft ? [-3.9, -4.8, -4.0, -4.9] : [3.9, 4.8, 4.0, 4.9]
-            const yPositions = [2.0, 0.7, -0.6, -1.9]
-            const zPositions = [-0.3, 0.3, -0.2, 0.4]
-
-            targetPos.set(
-              xPositions[sideIdx],
-              yPositions[sideIdx] + Math.sin(time * 0.6 + idx) * 0.08,
-              zPositions[sideIdx]
-            )
-            targetRot.set(0, isLeft ? 0.2 : -0.2, 0)
-            targetScale = window.innerWidth < 768 ? 0.52 : 0.78
-          } else if (currentScene === 7) {
-            // Scene 7: All 8 photos equally split: exactly 4 on left, 4 on right, facing forward and 100% visible
+            // Scene 6: The Birthday Message (All 8 photos equally split: 4 on left, 4 on right, facing forward and 100% visible)
             const isLeft = idx < count / 2
             const sideIdx = idx % 4
             const xBase = isLeft ? -4.3 - (sideIdx % 2) * 0.4 : 4.3 + (sideIdx % 2) * 0.4
@@ -667,11 +621,10 @@ export default function CinematicCanvas({
             const z = (sideIdx % 2 === 0 ? 0.2 : -0.4)
 
             targetPos.set(xBase, y + Math.sin(time * 0.5 + idx) * 0.07, z)
-            // Face camera directly with subtle inward tilt towards the letter
             targetRot.set(0, isLeft ? 0.18 : -0.18, 0)
             targetScale = window.innerWidth < 768 ? 0.52 : 0.75
-          } else if (currentScene === 8) {
-            // Scene 8: Semicircle crescent surrounding the cake
+          } else if (currentScene === 7) {
+            // Scene 7: Semicircle crescent surrounding the cake
             const arcAngle = (idx / (count - 1)) * Math.PI * 0.9 + Math.PI * 1.05
             const r = 4.2
             targetPos.set(
@@ -681,8 +634,8 @@ export default function CinematicCanvas({
             )
             targetRot.set(0, -arcAngle + Math.PI / 2, 0)
             targetScale = window.innerWidth < 768 ? 0.55 : 0.7
-          } else if (currentScene === 9) {
-            // Scene 9: Orbiting halo ring around "Happy Birthday Manisha"
+          } else if (currentScene === 8) {
+            // Scene 8: Orbiting halo ring around "Happy Birthday Manisha"
             const angle = (idx / count) * Math.PI * 2 + time * 0.12
             const radius = window.innerWidth < 768 ? 3.0 : 4.8
             targetPos.set(
@@ -702,43 +655,16 @@ export default function CinematicCanvas({
         })
       }
 
-      // Constellation Lines between all 8 photo nodes
-      if (constellationGroupRef.current && currentScene === 6 && meshes.length === 8) {
-        const linePositions = []
-        const connections = [
-          [0, 1], [1, 2], [2, 3],
-          [4, 5], [5, 6], [6, 7],
-          [0, 4], [3, 7],
-        ]
-        connections.forEach(([i, j]) => {
-          linePositions.push(
-            meshes[i].position.x,
-            meshes[i].position.y,
-            meshes[i].position.z,
-            meshes[j].position.x,
-            meshes[j].position.y,
-            meshes[j].position.z
-          )
-        })
-        constellationLineGeom.setAttribute(
-          'position',
-          new THREE.Float32BufferAttribute(linePositions, 3)
-        )
-        constellationLineGeom.attributes.position.needsUpdate = true
-      }
-
       // Visibilities
       if (timelineGroupRef.current) timelineGroupRef.current.visible = currentScene === 3
       if (distanceGroupRef.current) distanceGroupRef.current.visible = currentScene === 4
-      if (constellationGroupRef.current) constellationGroupRef.current.visible = currentScene === 6
-      if (cakeMeshRef.current) cakeMeshRef.current.visible = currentScene === 8
+      if (cakeMeshRef.current) cakeMeshRef.current.visible = currentScene === 7
 
       renderer.render(scene, camera)
     }
 
     animate()
 
-    // Cleanup
     return () => {
       cancelAnimationFrame(animationFrameId)
       window.removeEventListener('mousemove', handlePointerMove)

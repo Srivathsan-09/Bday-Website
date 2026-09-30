@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { photos } from '../../data/photos'
-import { Sparkles, Heart, ChevronLeft, ChevronRight, Wind } from 'lucide-react'
+import { Heart, ChevronLeft, ChevronRight } from 'lucide-react'
 import confetti from 'canvas-confetti'
 
 export default function WebGLFallback({ currentScene, onSceneChange }) {
@@ -26,7 +26,7 @@ export default function WebGLFallback({ currentScene, onSceneChange }) {
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#e6c887]/10 rounded-full blur-[120px]" />
       </div>
 
-      {/* Main Content Area based on currentScene */}
+      {/* Main Content Area based on currentScene (8 Scenes) */}
       <div className="relative z-10 flex-1 flex flex-col items-center justify-center max-w-4xl mx-auto my-auto py-12 text-center">
         {currentScene === 1 && (
           <div className="space-y-6 animate-fade-in">
@@ -104,12 +104,12 @@ export default function WebGLFallback({ currentScene, onSceneChange }) {
         {currentScene === 5 && (
           <div className="space-y-6 animate-fade-in">
             <h2 className="font-cinzel text-3xl sm:text-4xl gold-shimmer">Her Moments</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pt-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4">
               {photos.map((photo) => (
-                <div key={photo.id} className="glass-panel p-3 rounded-2xl border border-white/10 text-left">
-                  <img src={photo.url} alt={photo.title} className="w-full h-64 object-cover rounded-xl mb-3" />
-                  <p className="font-cormorant text-lg text-[#fdfbf7] italic">"{photo.caption}"</p>
-                  <p className="text-xs text-[#9b98a6]">{photo.title}</p>
+                <div key={photo.id} className="glass-panel p-2.5 rounded-2xl border border-white/10 text-left">
+                  <img src={photo.url} alt={photo.title} className="w-full h-48 object-cover rounded-xl mb-2" />
+                  <p className="font-cormorant text-base text-[#fdfbf7] italic">"{photo.caption}"</p>
+                  <p className="text-[10px] text-[#9b98a6]">{photo.title}</p>
                 </div>
               ))}
             </div>
@@ -117,17 +117,6 @@ export default function WebGLFallback({ currentScene, onSceneChange }) {
         )}
 
         {currentScene === 6 && (
-          <div className="space-y-6 animate-fade-in max-w-xl">
-            <h2 className="font-cormorant text-4xl sm:text-5xl font-light">
-              "A collection of little moments."
-            </h2>
-            <p className="font-sans text-lg text-[#c5c0d6] font-light">
-              And somehow, every picture has a little bit of you in it.
-            </p>
-          </div>
-        )}
-
-        {currentScene === 7 && (
           <div className="glass-panel p-8 sm:p-10 rounded-3xl max-w-2xl text-left font-cormorant space-y-4 border border-[#e6c887]/30">
             <h3 className="font-cinzel text-2xl text-[#fdfbf7] tracking-wider">Manisha,</h3>
             <p className="text-xl text-[#ddd8ec] font-light leading-relaxed">
@@ -156,7 +145,7 @@ export default function WebGLFallback({ currentScene, onSceneChange }) {
           </div>
         )}
 
-        {currentScene === 8 && (
+        {currentScene === 7 && (
           <div className="space-y-6 animate-fade-in max-w-md">
             <h2 className="font-cinzel text-4xl gold-shimmer">
               {candlesBlown ? 'Wish Made ✨' : 'Make a Wish'}
@@ -175,7 +164,7 @@ export default function WebGLFallback({ currentScene, onSceneChange }) {
                 </button>
               ) : (
                 <button
-                  onClick={() => onSceneChange(9)}
+                  onClick={() => onSceneChange(8)}
                   className="px-6 py-3 rounded-full bg-white/10 border border-[#e6c887] text-white font-medium text-xs uppercase tracking-widest cursor-pointer"
                 >
                   Final Reveal →
@@ -185,7 +174,7 @@ export default function WebGLFallback({ currentScene, onSceneChange }) {
           </div>
         )}
 
-        {currentScene === 9 && (
+        {currentScene === 8 && (
           <div className="space-y-6 animate-fade-in max-w-2xl">
             <h1 className="font-cinzel text-5xl sm:text-7xl font-bold gold-shimmer">
               Happy Birthday, Manisha
@@ -202,7 +191,7 @@ export default function WebGLFallback({ currentScene, onSceneChange }) {
             <div className="pt-6">
               <button
                 onClick={() => onSceneChange(1)}
-                className="px-6 py-2.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-xs uppercase tracking-widest"
+                className="px-6 py-2.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-xs uppercase tracking-widest cursor-pointer"
               >
                 Experience Again ↺
               </button>
@@ -221,11 +210,11 @@ export default function WebGLFallback({ currentScene, onSceneChange }) {
           <ChevronLeft className="w-4 h-4" />
         </button>
         <span className="text-xs font-mono text-[#e6c887]">
-          0{currentScene} / 09
+          0{currentScene} / 08
         </span>
         <button
-          onClick={() => currentScene < 9 && onSceneChange(currentScene + 1)}
-          disabled={currentScene === 9}
+          onClick={() => currentScene < 8 && onSceneChange(currentScene + 1)}
+          disabled={currentScene === 8}
           className="p-2 rounded-full glass-pill disabled:opacity-20 cursor-pointer"
         >
           <ChevronRight className="w-4 h-4" />

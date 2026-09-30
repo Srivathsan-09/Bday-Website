@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 export default function NavigationControls({
   currentScene,
-  totalScenes = 9,
+  totalScenes = 8,
   onSceneChange,
 }) {
   const isWheelingRef = useRef(false)
@@ -12,8 +12,8 @@ export default function NavigationControls({
   // Wheel debounce handler to allow smooth scene navigation
   useEffect(() => {
     const handleWheel = (e) => {
-      // In Scene 7, let the user scroll freely through the personal letter without triggering scene changes!
-      if (currentScene === 7) {
+      // In Scene 6 (Birthday Letter), let the user scroll freely through the personal letter without triggering scene changes!
+      if (currentScene === 6) {
         return
       }
 
@@ -47,8 +47,8 @@ export default function NavigationControls({
     }
 
     const handleTouchEnd = (e) => {
-      // If in Scene 7, allow vertical touch scroll inside the letter
-      if (currentScene === 7) {
+      // If in Scene 6, allow vertical touch scroll inside the letter
+      if (currentScene === 6) {
         return
       }
 
@@ -65,9 +65,9 @@ export default function NavigationControls({
     }
 
     const handleKeyDown = (e) => {
-      if (e.key === 'ArrowRight' || e.key === ' ' || (e.key === 'ArrowDown' && currentScene !== 7)) {
+      if (e.key === 'ArrowRight' || e.key === ' ' || (e.key === 'ArrowDown' && currentScene !== 6)) {
         if (currentScene < totalScenes) onSceneChange(currentScene + 1)
-      } else if (e.key === 'ArrowLeft' || (e.key === 'ArrowUp' && currentScene !== 7)) {
+      } else if (e.key === 'ArrowLeft' || (e.key === 'ArrowUp' && currentScene !== 6)) {
         if (currentScene > 1) onSceneChange(currentScene - 1)
       }
     }
@@ -90,7 +90,7 @@ export default function NavigationControls({
 
   return (
     <>
-      {/* Top Left: Scene Counter "01 / 09" */}
+      {/* Top Left: Scene Counter "01 / 08" */}
       <div className="fixed top-6 left-6 z-30 pointer-events-auto flex items-center gap-3">
         <div className="glass-pill px-3.5 py-1.5 rounded-full flex items-center gap-2 border border-white/10 text-xs font-mono tracking-widest text-[#fdfbf7]">
           <span className="text-[#e6c887] font-semibold">{formattedCurrent}</span>

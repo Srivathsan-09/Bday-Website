@@ -5,7 +5,6 @@ import Scene2Name from './components/scenes/Scene2Name'
 import Scene3Timeline from './components/scenes/Scene3Timeline'
 import Scene4Distance from './components/scenes/Scene4Distance'
 import Scene5Gallery from './components/scenes/Scene5Gallery'
-import Scene6Constellation from './components/scenes/Scene6Constellation'
 import Scene7Message from './components/scenes/Scene7Message'
 import Scene8Cake from './components/scenes/Scene8Cake'
 import Scene9Reveal from './components/scenes/Scene9Reveal'
@@ -51,10 +50,6 @@ export default function App() {
     setCurrentScene(1)
   }, [])
 
-  const handleGoToGallery = useCallback(() => {
-    setCurrentScene(5)
-  }, [])
-
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-[#050508] text-white select-none">
       {/* 1. Loading Screen */}
@@ -92,7 +87,7 @@ export default function App() {
           {/* Navigation Controls (Counter, Arrows, Dots, Wheel & Swipe gestures) */}
           <NavigationControls
             currentScene={currentScene}
-            totalScenes={9}
+            totalScenes={8}
             onSceneChange={handleSceneChange}
           />
 
@@ -108,16 +103,15 @@ export default function App() {
                 onSelectPhoto={setSelectedPhotoId}
               />
             )}
-            {currentScene === 6 && <Scene6Constellation />}
-            {currentScene === 7 && <Scene7Message />}
-            {currentScene === 8 && (
+            {currentScene === 6 && <Scene7Message />}
+            {currentScene === 7 && (
               <Scene8Cake
                 candlesBlown={candlesBlown}
                 onBlowCandles={handleBlowCandles}
-                onProceed={() => handleSceneChange(9)}
+                onProceed={() => handleSceneChange(8)}
               />
             )}
-            {currentScene === 9 && (
+            {currentScene === 8 && (
               <Scene9Reveal onRestart={handleRestart} />
             )}
           </main>
