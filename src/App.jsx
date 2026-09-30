@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import CinematicCanvas from './components/3d/CinematicCanvas'
 import Scene1Intro from './components/scenes/Scene1Intro'
 import Scene2Name from './components/scenes/Scene2Name'
@@ -24,6 +24,31 @@ export default function App() {
   const [webglSupported, setWebglSupported] = useState(true)
   const [isTransitioning, setIsTransitioning] = useState(false)
 
+  // Start playing the attached song when site opens & register fallback listeners for browser autoplay policies
+  useEffect(() => {
+    soundManager.play()
+
+    const triggerAudioOnFirstInteraction = () => {
+      soundManager.play()
+      window.removeEventListener('click', triggerAudioOnFirstInteraction)
+      window.removeEventListener('touchstart', triggerAudioOnFirstInteraction)
+      window.removeEventListener('keydown', triggerAudioOnFirstInteraction)
+      window.removeEventListener('pointerdown', triggerAudioOnFirstInteraction)
+    }
+
+    window.addEventListener('click', triggerAudioOnFirstInteraction, { passive: true })
+    window.addEventListener('touchstart', triggerAudioOnFirstInteraction, { passive: true })
+    window.addEventListener('keydown', triggerAudioOnFirstInteraction, { passive: true })
+    window.addEventListener('pointerdown', triggerAudioOnFirstInteraction, { passive: true })
+
+    return () => {
+      window.removeEventListener('click', triggerAudioOnFirstInteraction)
+      window.removeEventListener('touchstart', triggerAudioOnFirstInteraction)
+      window.removeEventListener('keydown', triggerAudioOnFirstInteraction)
+      window.removeEventListener('pointerdown', triggerAudioOnFirstInteraction)
+    }
+  }, [])
+
   const handleAssetsLoaded = useCallback(() => {
     setIsAssetsReady(true)
   }, [])
@@ -48,8 +73,14 @@ export default function App() {
   }, [currentScene])
 
   const handleEnter = useCallback(() => {
+    soundManager.play()
     handleSceneChange(2)
   }, [handleSceneChange])
+
+  const handleLoadingComplete = useCallback(() => {
+    setIsLoading(false)
+    soundManager.play()
+  }, [])
 
   const handleBlowCandles = useCallback(() => {
     setCandlesBlown(true)
@@ -66,7 +97,7 @@ export default function App() {
       {isLoading && (
         <LoadingScreen
           isAssetsReady={isAssetsReady}
-          onComplete={() => setIsLoading(false)}
+          onComplete={handleLoadingComplete}
         />
       )}
 

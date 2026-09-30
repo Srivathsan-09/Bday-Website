@@ -1,6 +1,5 @@
-// Cinematic Ambient Soundtrack Engine & Audio Manager
-// Uses Web Audio API to create a bespoke, warm, slow piano & celestial ambient soundscape,
-// while also gracefully supporting an external audio file if placed in /music.mp3
+// Audio Manager with Auto-Looping Soundtrack Engine
+// Supports custom /music.mp3, seamless infinite looping, and procedural fallback
 
 class AudioManager {
   constructor() {
@@ -19,28 +18,38 @@ class AudioManager {
     if (this.initialized) return
     try {
       const AudioContext = window.AudioContext || window.webkitAudioContext
-      if (!AudioContext) return
-      this.ctx = new AudioContext()
-      this.masterGain = this.ctx.createGain()
-      this.masterGain.gain.setValueAtTime(0.7, this.ctx.currentTime)
-      this.masterGain.connect(this.ctx.destination)
+      if (AudioContext) {
+        this.ctx = new AudioContext()
+        this.masterGain = this.ctx.createGain()
+        this.masterGain.gain.setValueAtTime(0.75, this.ctx.currentTime)
+        this.masterGain.connect(this.ctx.destination)
+      }
 
-      // Test for local external audio file
-      const audio = new Audio()
-      audio.src = '/music.mp3'
+      // Load the attached song /music.mp3
+      const audio = new Audio('/music.mp3')
       audio.loop = true
-      audio.preload = 'metadata'
+      audio.preload = 'auto'
+      audio.volume = 0.85
+
+      // Infinite loop guarantee across all mobile and desktop browsers
+      audio.addEventListener('ended', () => {
+        audio.currentTime = 0
+        audio.play().catch(() => {})
+      })
+
       audio.oncanplay = () => {
         this.hasExternalAudio = true
         this.externalAudio = audio
         this.notify()
       }
+
       audio.onerror = () => {
-        // No local audio file; fallback automatically to beautiful procedural ambient piano
         this.hasExternalAudio = false
         this.notify()
       }
 
+      this.externalAudio = audio
+      this.hasExternalAudio = true
       this.initialized = true
     } catch (e) {
       console.warn('AudioContext not supported or blocked:', e)
@@ -53,36 +62,43 @@ class AudioManager {
   }
 
   notify() {
-    this.onStateChangeCallbacks.forEach(cb => cb({
-      isPlaying: this.isPlaying,
-      isMuted: this.isMuted,
-      hasExternalAudio: this.hasExternalAudio
-    }))
+    this.onStateChangeCallbacks.forEach((cb) =>
+      cb({
+        isPlaying: this.isPlaying,
+        isMuted: this.isMuted,
+        hasExternalAudio: this.hasExternalAudio,
+      })
+    )
   }
 
   async play() {
     if (!this.initialized) this.init()
-    if (!this.ctx) return
 
-    if (this.ctx.state === 'suspended') {
-      await this.ctx.resume()
+    if (this.ctx && this.ctx.state === 'suspended') {
+      try {
+        await this.ctx.resume()
+      } catch (e) {}
     }
 
-    if (this.hasExternalAudio && this.externalAudio) {
+    if (this.externalAudio) {
       try {
-        await this.externalAudio.play()
+        if (this.externalAudio.paused) {
+          await this.externalAudio.play()
+        }
         this.isPlaying = true
         this.notify()
         return
       } catch (err) {
-        console.warn('External audio play failed, falling back to ambient synth:', err)
+        console.warn('Browser autoplay prevented immediate playback, will resume on interaction:', err)
       }
     }
 
-    // Play generative ambient piano
-    this.startAmbientSynth()
-    this.isPlaying = true
-    this.notify()
+    // Fallback ambient synth if external audio fails
+    if (!this.isPlaying) {
+      this.startAmbientSynth()
+      this.isPlaying = true
+      this.notify()
+    }
   }
 
   pause() {
@@ -105,13 +121,11 @@ class AudioManager {
   startAmbientSynth() {
     if (this.synthLoopTimer) return
 
-    // Emotional, cinematic piano chord progression:
-    // EbMaj9 (Eb, G, Bb, D, F) -> Cm9 (C, Eb, G, Bb, D) -> AbMaj7 (Ab, C, Eb, G) -> Bbadd9 (Bb, D, F, C)
     const chords = [
-      [155.56, 196.00, 233.08, 293.66, 349.23], // EbMaj9
-      [130.81, 155.56, 196.00, 233.08, 293.66], // Cm9
-      [103.83, 130.81, 155.56, 196.00, 261.63], // AbMaj7
-      [116.54, 146.83, 174.61, 220.00, 293.66], // Bb9
+      [155.56, 196.0, 233.08, 293.66, 349.23], // EbMaj9
+      [130.81, 155.56, 196.0, 233.08, 293.66], // Cm9
+      [103.83, 130.81, 155.56, 196.0, 261.63], // AbMaj7
+      [116.54, 146.83, 174.61, 220.0, 293.66], // Bb9
     ]
 
     let step = 0
@@ -121,13 +135,12 @@ class AudioManager {
       step++
 
       chord.forEach((freq, idx) => {
-        const delay = idx * 0.18 + (Math.random() * 0.08)
+        const delay = idx * 0.18 + Math.random() * 0.08
         this.playPianoNote(freq, delay, 4.5 + Math.random())
       })
 
-      // Occasional gentle high starlight note
       if (Math.random() > 0.3) {
-        const highNotes = [587.33, 698.46, 783.99, 880.00, 1046.50]
+        const highNotes = [587.33, 698.46, 783.99, 880.0, 1046.5]
         const hFreq = highNotes[Math.floor(Math.random() * highNotes.length)]
         this.playPianoNote(hFreq, 1.8 + Math.random(), 3.5, 0.06)
       }
@@ -149,7 +162,6 @@ class AudioManager {
     if (!this.ctx || !this.masterGain) return
     const now = this.ctx.currentTime + delaySeconds
 
-    // Fundamental oscillator (Warm sine + triangle blend)
     const osc = this.ctx.createOscillator()
     const osc2 = this.ctx.createOscillator()
     const noteGain = this.ctx.createGain()
@@ -159,14 +171,12 @@ class AudioManager {
     osc.frequency.setValueAtTime(freq, now)
 
     osc2.type = 'sine'
-    osc2.frequency.setValueAtTime(freq * 1.002, now) // subtle chorus detune
+    osc2.frequency.setValueAtTime(freq * 1.002, now)
 
-    // Warm low-pass filter
     filter.type = 'lowpass'
     filter.frequency.setValueAtTime(freq * 4.5, now)
     filter.frequency.exponentialRampToValueAtTime(Math.max(freq * 1.2, 100), now + duration)
 
-    // Gentle piano envelope
     noteGain.gain.setValueAtTime(0.0001, now)
     noteGain.gain.linearRampToValueAtTime(volume, now + 0.04)
     noteGain.gain.exponentialRampToValueAtTime(volume * 0.4, now + 1.2)
@@ -188,7 +198,6 @@ class AudioManager {
     if (!this.ctx) return
     const now = this.ctx.currentTime
 
-    // White noise breath buffer
     const bufferSize = this.ctx.sampleRate * 1.2
     const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate)
     const data = buffer.getChannelData(0)
@@ -217,7 +226,6 @@ class AudioManager {
     noise.start(now)
     noise.stop(now + 1.3)
 
-    // Celestial chime shimmer after extinguish
     setTimeout(() => {
       this.playChimeClimax()
     }, 400)
@@ -226,9 +234,9 @@ class AudioManager {
   // Gentle chime burst
   playChimeClimax() {
     if (!this.ctx) return
-    const chimeFreqs = [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98]
+    const chimeFreqs = [523.25, 659.25, 783.99, 1046.5, 1318.51, 1567.98]
     chimeFreqs.forEach((freq, idx) => {
-      const now = this.ctx.currentTime + (idx * 0.1)
+      const now = this.ctx.currentTime + idx * 0.1
       const osc = this.ctx.createOscillator()
       const gain = this.ctx.createGain()
 
@@ -252,7 +260,6 @@ class AudioManager {
     if (!this.ctx || !this.masterGain) return
     const now = this.ctx.currentTime
 
-    // 1. Soft breath whoosh
     const bufferSize = Math.floor(this.ctx.sampleRate * 0.45)
     const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate)
     const data = buffer.getChannelData(0)
@@ -279,7 +286,6 @@ class AudioManager {
     noise.start(now)
     noise.stop(now + 0.46)
 
-    // 2. Gentle celestial chime chord (Eb5, G5, Bb5)
     const freqs = [622.25, 783.99, 932.33]
     freqs.forEach((freq, idx) => {
       const osc = this.ctx.createOscillator()
