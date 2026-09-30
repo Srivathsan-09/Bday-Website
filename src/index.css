@@ -1,0 +1,140 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg-deep: #050508;
+    --text-primary: #fdfbf7;
+    --text-secondary: #9b98a6;
+    --accent-gold: #e6c887;
+    --accent-rose: #d68fa8;
+    --accent-violet: #8e7dbe;
+  }
+
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html, body, #root {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: var(--bg-deep);
+    color: var(--text-primary);
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+}
+
+/* Typography Helpers */
+.font-cinzel {
+  font-family: 'Cinzel', Georgia, serif;
+  letter-spacing: 0.08em;
+}
+
+.font-cormorant {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+}
+
+.font-sans {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Glassmorphism */
+.glass-panel {
+  background: rgba(18, 16, 26, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.glass-pill {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-pill:hover {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(230, 200, 135, 0.4);
+}
+
+/* Text Shimmer */
+.gold-shimmer {
+  background: linear-gradient(135deg, #fff2cc 0%, #e6c887 40%, #c49e54 70%, #fff4d1 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.rose-shimmer {
+  background: linear-gradient(135deg, #ffffff 0%, #f6c0d0 50%, #cca3b5 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Custom subtle scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(5, 5, 8, 0.8);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(230, 200, 135, 0.25);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(230, 200, 135, 0.5);
+}
+
+/* Animations */
+@keyframes floatGentle {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(0.5deg);
+  }
+}
+
+.animate-float {
+  animation: floatGentle 6s ease-in-out infinite;
+}
+
+@keyframes pulseSubtle {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+.animate-pulse-subtle {
+  animation: pulseSubtle 4s ease-in-out infinite;
+}
+
+@keyframes flameWiggle {
+  0%, 100% {
+    transform: scaleY(1) scaleX(1) skewX(0deg);
+  }
+  25% {
+    transform: scaleY(1.1) scaleX(0.92) skewX(2deg);
+  }
+  50% {
+    transform: scaleY(0.95) scaleX(1.05) skewX(-2deg);
+  }
+  75% {
+    transform: scaleY(1.08) scaleX(0.96) skewX(1deg);
+  }
+}
+
+.animate-flame {
+  animation: flameWiggle 0.8s ease-in-out infinite alternate;
+}
