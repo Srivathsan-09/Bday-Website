@@ -13,6 +13,7 @@ import LoadingScreen from './components/ui/LoadingScreen'
 import NavigationControls from './components/ui/NavigationControls'
 import MusicPlayer from './components/ui/MusicPlayer'
 import WebGLFallback from './components/ui/WebGLFallback'
+import { soundManager } from './utils/soundtrack'
 
 export default function App() {
   const [isLoading, setIsLoading] = useState(true)
@@ -21,6 +22,7 @@ export default function App() {
   const [selectedPhotoId, setSelectedPhotoId] = useState(null)
   const [candlesBlown, setCandlesBlown] = useState(false)
   const [webglSupported, setWebglSupported] = useState(true)
+  const [isTransitioning, setIsTransitioning] = useState(false)
 
   const handleAssetsLoaded = useCallback(() => {
     setIsAssetsReady(true)
@@ -32,13 +34,22 @@ export default function App() {
   }, [])
 
   const handleSceneChange = useCallback((newScene) => {
+    if (newScene === currentScene) return
     setSelectedPhotoId(null)
     setCurrentScene(newScene)
-  }, [])
+    setIsTransitioning(true)
+
+    // Play subtle cinematic transition tone
+    soundManager.playTransitionSound()
+
+    setTimeout(() => {
+      setIsTransitioning(false)
+    }, 750)
+  }, [currentScene])
 
   const handleEnter = useCallback(() => {
-    setCurrentScene(2)
-  }, [])
+    handleSceneChange(2)
+  }, [handleSceneChange])
 
   const handleBlowCandles = useCallback(() => {
     setCandlesBlown(true)
@@ -46,9 +57,8 @@ export default function App() {
 
   const handleRestart = useCallback(() => {
     setCandlesBlown(false)
-    setSelectedPhotoId(null)
-    setCurrentScene(1)
-  }, [])
+    handleSceneChange(1)
+  }, [handleSceneChange])
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-[#050508] text-white select-none">
@@ -91,8 +101,21 @@ export default function App() {
             onSceneChange={handleSceneChange}
           />
 
-          {/* 4. Active Scene UI Layer */}
-          <main className="absolute inset-0 w-full h-full pointer-events-none z-10">
+          {/* Cinematic Light Flare & Anamorphic Light Streak Transition */}
+          {isTransitioning && (
+            <div className="fixed inset-0 pointer-events-none z-40 overflow-hidden flex items-center justify-center">
+              {/* Cosmic radial flare bloom */}
+              <div className="absolute w-[650px] h-[650px] rounded-full bg-gradient-to-tr from-[#e6c887]/25 via-[#d68fa8]/15 to-transparent blur-3xl animate-flash-bloom" />
+              {/* Anamorphic light streak across screen */}
+              <div className="w-full h-[2px] bg-gradient-to-r from-transparent via-[#fff5d6]/90 to-transparent blur-[1px] animate-light-streak" />
+            </div>
+          )}
+
+          {/* 4. Active Scene UI Layer with Hollywood Scene Warp Transition */}
+          <main
+            key={currentScene}
+            className="absolute inset-0 w-full h-full pointer-events-none z-10 animate-scene-warp"
+          >
             {currentScene === 1 && <Scene1Intro onEnter={handleEnter} />}
             {currentScene === 2 && <Scene2Name />}
             {currentScene === 3 && <Scene3Timeline />}

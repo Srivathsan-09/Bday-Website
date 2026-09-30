@@ -246,6 +246,57 @@ class AudioManager {
       osc.stop(now + 3.1)
     })
   }
+
+  // Soft cinematic whoosh & harmonic chord for scene transitions
+  playTransitionSound() {
+    if (!this.ctx || !this.masterGain) return
+    const now = this.ctx.currentTime
+
+    // 1. Soft breath whoosh
+    const bufferSize = Math.floor(this.ctx.sampleRate * 0.45)
+    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate)
+    const data = buffer.getChannelData(0)
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * 0.04
+    }
+    const noise = this.ctx.createBufferSource()
+    noise.buffer = buffer
+
+    const filter = this.ctx.createBiquadFilter()
+    filter.type = 'lowpass'
+    filter.frequency.setValueAtTime(300, now)
+    filter.frequency.exponentialRampToValueAtTime(1200, now + 0.2)
+    filter.frequency.exponentialRampToValueAtTime(200, now + 0.45)
+
+    const noiseGain = this.ctx.createGain()
+    noiseGain.gain.setValueAtTime(0.001, now)
+    noiseGain.gain.linearRampToValueAtTime(0.08, now + 0.15)
+    noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.45)
+
+    noise.connect(filter)
+    filter.connect(noiseGain)
+    noiseGain.connect(this.masterGain)
+    noise.start(now)
+    noise.stop(now + 0.46)
+
+    // 2. Gentle celestial chime chord (Eb5, G5, Bb5)
+    const freqs = [622.25, 783.99, 932.33]
+    freqs.forEach((freq, idx) => {
+      const osc = this.ctx.createOscillator()
+      const g = this.ctx.createGain()
+      osc.type = 'sine'
+      osc.frequency.setValueAtTime(freq, now + idx * 0.04)
+
+      g.gain.setValueAtTime(0.0001, now + idx * 0.04)
+      g.gain.linearRampToValueAtTime(0.025, now + idx * 0.04 + 0.03)
+      g.gain.exponentialRampToValueAtTime(0.00001, now + idx * 0.04 + 1.2)
+
+      osc.connect(g)
+      g.connect(this.masterGain)
+      osc.start(now + idx * 0.04)
+      osc.stop(now + idx * 0.04 + 1.25)
+    })
+  }
 }
 
 export const soundManager = new AudioManager()

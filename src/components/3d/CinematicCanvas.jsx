@@ -29,6 +29,7 @@ export default function CinematicCanvas({
   const galleryRotationRef = useRef(0)
   const isDraggingGalleryRef = useRef(false)
   const lastPointerXRef = useRef(0)
+  const warpIntensityRef = useRef(0)
 
   // Camera targets for each scene (8 scenes total)
   const cameraTargets = {
@@ -461,15 +462,25 @@ export default function CinematicCanvas({
         desiredCamPos.y += mouseRef.current.y * parallaxFactorY
       }
 
-      currentCamPos.current.lerp(desiredCamPos, 0.04)
-      currentCamLook.current.lerp(desiredCamLook, 0.04)
+      // Dynamic camera speed during scene transitions
+      const lerpFactor = THREE.MathUtils.lerp(0.045, 0.085, warpIntensityRef.current)
+      currentCamPos.current.lerp(desiredCamPos, lerpFactor)
+      currentCamLook.current.lerp(desiredCamLook, lerpFactor)
 
       camera.position.copy(currentCamPos.current)
       camera.lookAt(currentCamLook.current)
 
+      // Ambient particle drift + warp speed surge during scene transitions
       if (particlesRef.current) {
         particlesRef.current.rotation.y = time * 0.015
         particlesRef.current.rotation.x = Math.sin(time * 0.01) * 0.05
+        if (warpIntensityRef.current > 0.01) {
+          particlesRef.current.position.z += warpIntensityRef.current * 0.16
+          if (particlesRef.current.position.z > 6) {
+            particlesRef.current.position.z = -5
+          }
+          warpIntensityRef.current *= 0.94
+        }
       }
 
       // Animate Cake Flames & Extinguish on Scene 7
@@ -681,6 +692,11 @@ export default function CinematicCanvas({
       renderer.dispose()
     }
   }, [currentScene, onLoaded, onWebGLUnsupported, onCandleBlow, onSelectPhoto])
+
+  // Trigger warp speed and camera acceleration whenever scene changes
+  useEffect(() => {
+    warpIntensityRef.current = 1.0
+  }, [currentScene])
 
   useEffect(() => {
     if (candlesBlown && cakeMeshRef.current?.userData?.extinguish) {
